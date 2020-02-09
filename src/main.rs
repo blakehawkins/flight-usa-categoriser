@@ -56,12 +56,12 @@ fn main() -> Result<(), std::io::Error> {
         let mut matches = line
             .trim()
             .split(',')
-            .map(|st| (st, CATEGORISATION.get(st)))
+            .map(|st| (st, CATEGORISATION.get(st.trim())))
             .filter(|opt| opt.1.is_some())
             .map(|pair| (pair.0, pair.1.unwrap()));
 
         if matches.clone().count() != 2 {
-            println!("!! {:?}", matches);
+            eprintln!("!! {:?}", matches);
         }
 
         let pair = (matches.next().unwrap(), matches.next().unwrap());
