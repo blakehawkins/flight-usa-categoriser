@@ -63,7 +63,11 @@ static CATEGORISATION: phf::Map<&'static str, Category> = phf_map! {
 };
 
 fn shorten(airport: &str) -> &str {
-    airport.split('(').nth(1).and_then(|part| part.split('/').nth(0)).unwrap_or_else(|| airport)
+    airport
+        .split('(')
+        .nth(1)
+        .and_then(|part| part.split('/').next())
+        .unwrap_or_else(|| airport)
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -92,5 +96,8 @@ fn main() -> Result<(), std::io::Error> {
 
 #[test]
 fn test() {
-    assert_eq!(shorten("Los Angeles / Los Angeles International (LAX/KLAX)"), "LAX");
+    assert_eq!(
+        shorten("Los Angeles / Los Angeles International (LAX/KLAX)"),
+        "LAX"
+    );
 }
