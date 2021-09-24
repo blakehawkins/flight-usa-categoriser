@@ -2,3 +2,5 @@
 **/*.rs.bk
 data.tsv
 .vscode/
+data.csv
+uk.csv

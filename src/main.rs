@@ -1,97 +1,152 @@
+use getopt::Opt;
 use oops::Oops;
 use phf::phf_map;
-use stdinix::stdinix;
 
 #[derive(Debug, PartialEq)]
-enum Category {
-    InUsa,
-    NotInUsa,
+enum Country {
+    Usa,
+    Uk,
+    Other,
 }
 
-use crate::Category::*;
+use crate::Country::*;
 
-static CATEGORISATION: phf::Map<&'static str, Category> = phf_map! {
-    "ABZ" => NotInUsa,
-    "AGP" => NotInUsa,
-    "AMS" => NotInUsa,
-    "ATH" => NotInUsa,
-    "BAH" => NotInUsa,
-    "BJV" => NotInUsa,
-    "BCN" => NotInUsa,
-    "BGY" => NotInUsa,
-    "BKK" => NotInUsa,
-    "BRU" => NotInUsa,
-    "BUD" => NotInUsa,
-    "CDG" => NotInUsa,
-    "CHQ" => NotInUsa,
-    "CIA" => NotInUsa,
-    "CPH" => NotInUsa,
-    "CRL" => NotInUsa,
-    "DMK" => NotInUsa,
-    "DOH" => NotInUsa,
-    "DXB" => NotInUsa,
-    "EDI" => NotInUsa,
-    "EMA" => NotInUsa,
-    "EWR" => InUsa,
-    "GLA" => NotInUsa,
-    "GRU" => NotInUsa,
-    "HEL" => NotInUsa,
-    "HKT" => NotInUsa,
-    "HND" => NotInUsa,
-    "IAD" => InUsa,
-    "JFK" => InUsa,
-    "KBV" => NotInUsa,
-    "KIX" => NotInUsa,
-    "LAX" => InUsa,
-    "LGW" => NotInUsa,
-    "LHR" => NotInUsa,
-    "LIS" => NotInUsa,
-    "LPX" => NotInUsa,
-    "LTN" => NotInUsa,
-    "MVD" => NotInUsa,
-    "NRT" => NotInUsa,
-    "OSL" => NotInUsa,
-    "PHX" => InUsa,
-    "RIX" => NotInUsa,
-    "SAN" => InUsa,
-    "SFO" => InUsa,
-    "STN" => NotInUsa,
-    "SVO" => NotInUsa,
-    "TLL" => NotInUsa,
-    "TLS" => NotInUsa,
-    "TXL" => NotInUsa,
+static CATEGORISATION: phf::Map<&'static str, Country> = phf_map! {
+    "ABZ" => Uk,
+    "AGP" => Other,
+    "AMS" => Other,
+    "ATH" => Other,
+    "BAH" => Other,
+    "BJV" => Other,
+    "BCN" => Other,
+    "BGY" => Other,
+    "BKK" => Other,
+    "BRU" => Other,
+    "BUD" => Other,
+    "CDG" => Other,
+    "CHQ" => Other,
+    "CIA" => Other,
+    "CPH" => Other,
+    "CRL" => Other,
+    "DMK" => Other,
+    "DOH" => Other,
+    "DXB" => Other,
+    "EDI" => Uk,
+    "EMA" => Uk,
+    "EWR" => Usa,
+    "GLA" => Uk,
+    "GRU" => Other,
+    "HEL" => Other,
+    "HKT" => Other,
+    "HND" => Other,
+    "IAD" => Usa,
+    "JFK" => Usa,
+    "KBV" => Other,
+    "KIX" => Other,
+    "LAX" => Usa,
+    "LGW" => Uk,
+    "LHR" => Uk,
+    "LIS" => Other,
+    "LPX" => Other,
+    "LTN" => Uk,
+    "MVD" => Other,
+    "NRT" => Other,
+    "OSL" => Other,
+    "PHX" => Usa,
+    "RIX" => Other,
+    "SAN" => Usa,
+    "SFO" => Usa,
+    "STN" => Uk,
+    "SVO" => Other,
+    "TLL" => Other,
+    "TLS" => Other,
+    "TXL" => Other,
 };
+
+impl From<&str> for Country {
+    fn from(item: &str) -> Country {
+        match item {
+            "USA" => Country::Usa,
+            "UK" => Country::Uk,
+            _ => panic!("Unexpected hub country specified"),
+        }
+    }
+}
 
 fn shorten(airport: &str) -> &str {
     airport
         .split('(')
         .nth(1)
         .and_then(|part| part.split('/').next())
-        .unwrap_or_else(|| airport)
+        .unwrap_or(airport)
+}
+
+struct Opts {
+    hub: Country,
+    from_field_idx: usize,
+    to_field_idx: usize,
+}
+
+impl Default for Opts {
+    fn default() -> Self {
+        Opts {
+            hub: Usa,
+            from_field_idx: 2,
+            to_field_idx: 3,
+        }
+    }
 }
 
 fn main() -> Result<(), std::io::Error> {
-    stdinix(|line| {
-        let airports = line.trim().split(',').map(str::trim).collect::<Vec<_>>();
-
-        assert_eq!(airports.len(), 2);
-
-        let matches = airports
-            .iter()
-            .map(|airport| {
-                CATEGORISATION
-                    .get(airport.trim())
-                    .or_else(|| CATEGORISATION.get(shorten(airport)))
-                    .oops(&format!("Airport {} not known", airport))
+    let args = std::env::args().collect::<Vec<_>>();
+    let opts: Opts = getopt::Parser::new(&args, "c:f:t:")
+        .map(|v| v.expect("failed to parse"))
+        .try_fold(Opts::default(), |curr, iter| {
+            Ok::<_, core::num::ParseIntError>(match iter {
+                Opt('c', Some(hub)) => Opts {
+                    hub: hub[..].into(),
+                    ..curr
+                },
+                Opt('f', Some(idx)) => Opts {
+                    from_field_idx: idx.parse::<usize>()?,
+                    ..curr
+                },
+                Opt('t', Some(idx)) => Opts {
+                    to_field_idx: idx.parse::<usize>()?,
+                    ..curr
+                },
+                _ => unreachable!(),
             })
-            .collect::<Result<Vec<_>, _>>()?;
+        })
+        .oops("Failed to parse index")?;
 
-        if matches[0] != matches[1] {
-            println!("{},{}", shorten(airports[0]), shorten(airports[1]));
-        }
+    csv::Reader::from_reader(std::io::stdin())
+        .records()
+        .try_for_each(|line| {
+            let line = line.expect("Parsed bad CSV entry");
+            let airports = vec![
+                line.get(opts.from_field_idx).unwrap(),
+                line.get(opts.to_field_idx).unwrap(),
+            ];
 
-        Ok(())
-    })
+            let matches = airports
+                .iter()
+                .map(|airport| {
+                    CATEGORISATION
+                        .get(airport.trim())
+                        .or_else(|| CATEGORISATION.get(shorten(airport)))
+                        .oops(&format!("Airport {} not known", airport))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+
+            if matches.iter().any(|v| *v == &opts.hub) && matches.iter().any(|v| *v != &opts.hub) {
+                csv::Writer::from_writer(std::io::stdout()).write_record(&line)?;
+            }
+
+            Ok::<_, std::io::Error>(())
+        })?;
+
+    Ok(())
 }
 
 #[test]

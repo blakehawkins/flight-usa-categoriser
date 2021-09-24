@@ -5,7 +5,7 @@ authors = ["blakehawkins"]
 edition = "2018"
 
 [dependencies]
+csv = "1.1"
+getopt = "1.1"
 phf = { version = "0.8.0", features = ["macros"] }
-oops = "0.1"
-stdinix = "0.1"
-
+oops = "0.2"
