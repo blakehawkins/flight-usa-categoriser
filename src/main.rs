@@ -58,6 +58,7 @@ static CATEGORISATION: phf::Map<&'static str, Country> = phf_map! {
     "SFO" => Usa,
     "STN" => Uk,
     "SVO" => Other,
+    "TFS" => Other,
     "TLL" => Other,
     "TLS" => Other,
     "TXL" => Other,
