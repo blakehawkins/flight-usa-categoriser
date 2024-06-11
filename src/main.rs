@@ -126,7 +126,7 @@ fn main() -> Result<(), std::io::Error> {
         .records()
         .try_for_each(|line| {
             let line = line.expect("Parsed bad CSV entry");
-            let airports = vec![
+            let airports = [
                 line.get(opts.from_field_idx).unwrap(),
                 line.get(opts.to_field_idx).unwrap(),
             ];
