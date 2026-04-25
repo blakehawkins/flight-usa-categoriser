@@ -144,7 +144,7 @@ fn main() -> Result<(), std::io::Error> {
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 
-            if matches.iter().any(|v| *v == &opts.hub) && matches.iter().any(|v| *v != &opts.hub) {
+            if matches.contains(&&opts.hub) && matches.iter().any(|v| *v != &opts.hub) {
                 csv::Writer::from_writer(std::io::stdout()).write_record(&line)?;
             }
 

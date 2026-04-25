@@ -7,5 +7,5 @@ edition = "2018"
 [dependencies]
 csv = "1.1"
 getopt = "1.1"
-phf = { version = "0.8.0", features = ["macros"] }
+phf = { version = "0.13", features = ["macros"] }
 oops = "0.2"
